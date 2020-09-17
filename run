@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# removing containers
+docker stop es
+docker rm es
+docker stop web
+docker rm web
+docker network rm multicontainer-net
+
+# build the flask container
+docker build -t web flask-app/
+
+# create the network
+docker network create multicontainer-net
+
+# start the ES container
+docker run -d --name es --net multicontainer-net -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+
+# start the flask app container
+docker run -d --net multicontainer-net -p 5000:5000 -v /home/michal/Projects/multicontainer/flask-app:/usr/src/app --name web web python app.py
